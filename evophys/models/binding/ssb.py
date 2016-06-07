@@ -1,6 +1,10 @@
-```
-Documentation....
-```
+'''
+Single Site Binding model
+other documentation....
+'''
+
+import numpy as np
+
 
 class SSB:
 
