@@ -6,6 +6,8 @@ class SimplisticTest(unittest.TestCase):
 	
 	def test_binding_curve(self):
 		s = SSB()
+
+		# asserts that this class initalizes correctly
 		self.assertTrue( len(s.binding_curve) > 0 )
 
 

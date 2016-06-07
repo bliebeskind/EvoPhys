@@ -1,10 +1,11 @@
-```
-Documentation...
-```
+'''
+Genetic algorithm simulation
+other documentation....
+'''
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-import matplotlib.pyplot as plt
+from evophys.models.binding.ssb import SSB
 
 
 class PhysPopulation(SSB):
