@@ -13,9 +13,14 @@ class SSB:
         self.k2 = k2
         self.f = f
         self.w = None
+		
+		self.paramD = {"k1":self.k1,"k2":self.k2,"f":self.f}
+		
         self.conc_range = (-12,-3)
+		self.xvals = []
+		
         self.binding_curve = []
-        self.xvals = []
+        
         self.step = .01
         self.step_func = lambda x: 10**x
 
