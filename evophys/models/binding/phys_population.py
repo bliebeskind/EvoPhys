@@ -70,10 +70,9 @@ class PhysPopulation():
 		paramVals = {p:[] for p in self._model_inst.paramD}
 		ws = []
 		
-		if startRandom:
-			rando = np.random.uniform
 		for i in range(self.N):
 			if startRandom:
+				rando = np.random.uniform
 				for param in self._model_inst.paramD:
 					assert self.param_bounds and param in self.param_bounds, "Must supply bounds for parameter random start"
 				kwargs = {p: np.random.uniform(self.param_bounds[p][0],self.param_bounds[p][1]) for p in self.param_bounds}
