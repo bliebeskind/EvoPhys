@@ -9,7 +9,7 @@ from scipy.stats import norm
 
 class PhysPopulation():
 
-	def __init__(self,model,modelParams={},params_to_mut=[],N=100,dt=10,selection_strength=1,startRandom=False,paramBounds=None):
+	def __init__(self,model,modelParams={},params_to_mut=[],N=100,dt=10,selection_strength=1,mutAllParams=True,startRandom=False,paramBounds=None):
 		
 		# Biophysical model
 		# Create target model on startup by simulating under binding model and populating self.binding curve
@@ -32,8 +32,7 @@ class PhysPopulation():
 		# Genetic algorithm params
 		self.N = N
 		self.selection_strength = selection_strength
-		self.cost_function = self._distance_function
-		
+		self.mutAllParams = mutAllParams
 		
 		# Brownian motion params
 		self.dt = dt
@@ -106,14 +105,20 @@ class PhysPopulation():
 	def brownian(self,paramD):
 		'''Take a single brownian step over params vector'''
 		out = {}
+		if not self.mutAllParams:
+			paramToMut = np.random.choice(self.params_to_mut)
 		for i,j in paramD.iteritems():
 			if i not in self.params_to_mut:
-				out[i] = j
+				out[i] = j # set to old value
 				continue
-			new_param = j + norm.rvs(loc=0,scale=2*self.dt)
-			if new_param < 0:
-				new_param = 0
-			out[i] = new_param
+			elif not self.mutAllParams and i != paramToMut:
+				out[i] = j # set to old value
+				continue
+			else:
+				new_param = j + norm.rvs(loc=0,scale=2*self.dt)
+				if new_param < 0:
+					new_param = 0
+				out[i] = new_param
 		return out
 		
 	def procreate(self):
