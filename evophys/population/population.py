@@ -94,13 +94,14 @@ class PhysPopulation():
 		self.mean_fitness = sum(ws)/len(ws)
 		self.fitness_var = np.var(ws)
 
-	def _distance_function(self,target,comp):
-		'''Compute root mean squared distance between two input binding curves'''
-		assert len(comp) == len(target), "Different vector lengths: target: %i, comp: %i" % (len(target),len(comp))
-		return np.sqrt(sum(map(lambda (x,y): (x-y)**2, zip(target,comp)))/len(comp))
-
 	def _get_w(self,target,comp):
-		return self.selection_strength * (1 - self._distance_function(target,comp))
+		'''
+		Compute fitness function. Fitness is modeled as a normal with x-mu = rmsd between
+		target model output and focal, and var = self.selection_strength. 
+		'''
+		assert len(comp) == len(target), "Different vector lengths: target: %i, comp: %i" % (len(target),len(comp))
+		rmsd = np.sqrt(sum(map(lambda (x,y): (x-y)**2, zip(target,comp)))/len(comp))
+		return np.exp(-(rmsd**2)/2*self.selection_strength)
 
 	def brownian(self,paramD):
 		'''Take a single brownian step over params vector'''
