@@ -2,6 +2,8 @@
 Genetic algorithm simulation
 other documentation....
 '''
+
+import random
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
@@ -161,112 +163,108 @@ class PhysPopulation():
 		
 		
 		
-class WrightFisherSim(SSB):
+class WrightFisherSim:
 
-	def __init__(self,num_generations=1000,N=10e5,mu=10e-5,std=10,fitness_function="normal",omega=1,k1=1e7,k2=1e8,f=10):
+	def __init__(self,model,modelParams={},N=10e5,mu=10e-5,dt=10,selection_strength=.1):
 	
-		SSB.__init__(self,k1,k2,f)
-		self.sim() # get starting curve
-		self.target = self.binding_curve
-		self.mu = mu
-		self.std = std
-		self.num_generations = num_generations
+		self.model = model
+		self._model_params = modelParams
+		self._model_inst = self.model(**modelParams)
+		# list for choosing num params to mutate range 1..#numModelParams
+		self._numParamList = [i+1 for i in np.arange(len(self._model_params))]
+		self.target = self._model_inst.output
+		self.output = self.target
+		
+		# PopGen parameters
+		self.mu = mu # mutation rate
+		self.dt = dt
 		self.N = N
-		self.params = {"k1":self.k1, "k2":self.k2, "f":self.f}
+		self.current_params = modelParams
 		self.fitness = 1
-		self.fitness_function = fitness_function
-		self.omega = omega
+		self.selection_strength = selection_strength
 		self.current_gen = 1
 		
+		# Current state
+		self._isFirst = True
+		self.gens_till_next_mut = 1
+		self.gens_since_mut = 1
+		self.mutated = False
+		self.num_params_mutated = 0
+		self.params_mutated = []
+		self.new_model_w = 0
+		self.new_model_s = 0
+		self.prob_fix = 0
+		self.fixed = False
+		
 	def _num_gens_till_mut(self):
+		'''Introduction of new mutations is a Poisson process with wait time ~ Exp( lambda = 4Nmu )'''
 		return random.expovariate(4 * self.N * self.mu)
 		
-	def _fitness_function_linear(self,target,comp):
-		'''Compute rmsd between two input binding curves and return (2 - rmsd)/2. 2 is maximum
-		distance for the SSB model, so this should scale between 0 and 1'''
-		assert len(comp) == len(target)
-		return (2 - np.sqrt(sum(map(lambda (x,y): (x-y)**2, zip(target,comp)))/len(target))) / 2
-		
-	def _fitness_function_normal(self,target,comp,omega):
+	def _fitness_function_normal(self,target,comp,selection_strength):
 		'''Compute rmsd between two input binding curves and return a normally 
-		distributed fitness function with variance parameter omega'''
+		distributed fitness function with variance parameter self.selection_strength'''
 		assert len(comp) == len(target)
 		rmsd = np.sqrt(sum(map(lambda (x,y): (x-y)**2, zip(target,comp)))/len(target))
-		return np.exp(-(rmsd**2)/2*omega)
+		return np.exp(-(rmsd**2)/2*selection_strength)
 		
 	def _selection_coefficient(self,w):
 		return (w/self.fitness) - 1
 		
 	def _prob_fix(self,s):
 		return (1 - np.exp(-(2 * s))) / (1 - np.exp(-(4 * self.N * s)))
-
-	def runSim(self,outfile):
-	
-		out = open(outfile,'a')
-		out.write(",".join(["generation","k1","k2","f","fitness","mutType","fixed","\t",
-								"s","probFix","rando"]) + "\n")
-	
-		gens_since_mut = 1
-		for gen in np.arange(self.num_generations):
 		
+	def nextGen(self):
+		
+		if self._isFirst:
 			# pull num generations until mutation from exponential(4Nmu)
-			mutGens = self._num_gens_till_mut()
+			self.gens_till_next_mut = self._num_gens_till_mut()
+			self._isFirst = False
+		
+		# if gens generations < num until mut. write current state
+		if self.gens_till_next_mut <= self.gens_since_mut:
+		
+			self.mutated = True
 			
-			# if gens generations < num until mut. write current state
-			if mutGens <= gens_since_mut:
-				
-				# if mutation, get kind of mutation from uniform over how many parameters to disturb (1,2,3)
-				mutKind = random.choice([1,2,3])
-				
-				# if num parameters to disturb < 3, choose random
-				mutParams = random.sample(self.params.keys(),mutKind)
-				newParamD = {}
-				
-				# mutate parameters using normal (mean=0,std)
-				for p in mutParams:
-					newParamD[p] = self.params[p] + random.normalvariate(0,self.std)
-				if len(newParamD.keys()) < 3:
-					for i in self.params.keys(): # fill in with old params
-						if i not in newParamD:
-							newParamD[i] = self.params[i]
-				newModel = SSB(k1=newParamD["k1"],k2=newParamD["k2"],f=newParamD["f"])
-				newModel.sim()
-				
-				# Calculate fitness, choosing linear or normally distributed fitness function
-				if self.fitness_function == "linear":
-					newModelFitness = self._fitness_function_linear(self.target,newModel.binding_curve)
-				elif self.fitness_function == "normal":
-					newModelFitness = self._fitness_function_normal(self.target,newModel.binding_curve,self.omega)
-				else:
-					raise Exception("Fitness function type: %s not found" % fitness)
-				
-				# calculate selection coefficient
-				newModelS = self._selection_coefficient(newModelFitness)
-				
-				# calc prob of fixation
-				probFix = self._prob_fix(newModelS)
-				
-				# draw random(0,1), if < prob of fixation, set new model as current, with parameters and fitness values.
-				rando = random.uniform(0,1)
-				fixes = rando < probFix
-				if fixes:
-					self.model = newModel.binding_curve
-					self.fitness = newModelFitness
-					self.k1 = newModel.k1
-					self.k2 = newModel.k2
-					self.f = newModel.f
-					self.binding_curve = newModel.binding_curve
-					self.params = {"k1":self.k1, "k2":self.k2, "f":self.f}
-				
-			else:
-				mutKind = None
-				fixes = None
-				gens_since_mut += 1
+			# if mutation, get kind of mutation from uniform over how many parameters to disturb (1,2,3)
+			self.num_params_mutated = random.choice(self._numParamList)
 			
-			if fixes:
-				out.write(",".join(map(str,[self.current_gen,self.k1,self.k2,self.f,self.fitness,mutKind,fixes,"\t",
-											newModelS,probFix,rando,"\t",newModel.k1,newModel.k2,newModel.f]))+ "\n")
-			print self.current_gen
-			self.current_gen += 1
+			# Choose a number <self.num_params_mutated> of parameter names to mutate
+			self.params_mutated = random.sample(self.current_params.keys(),self.num_params_mutated)
+			newParamD = self.current_params.copy()
 			
-		out.close()
+			# mutate parameters using normal (mean=0,dt)
+			for p in self.params_mutated:
+				# overwrite old params with new
+				newP = self.current_params[p] + random.normalvariate(0,2*self.dt)
+				if newP < 0:
+					newP = 0
+				newParamD[p] = newP
+
+			newModel = self.model(**newParamD)
+			
+			# Calculate fitness
+			self.new_model_w = self._fitness_function_normal(self.target,newModel.output,self.selection_strength)
+			
+			# calculate selection coefficient
+			self.new_model_s = self._selection_coefficient(self.new_model_w)
+			
+			# calc prob of fixation
+			self.prob_fix = self._prob_fix(self.new_model_s)
+			
+			# draw random(0,1), if < prob of fixation, set new model as current, with parameters and fitness values.
+			rando = random.uniform(0,1)
+			self.fixed = rando < self.prob_fix
+			if self.fixed:
+				self.current_params = newModel.paramD # set to new params
+				self.output = newModel.output # set to new output
+				self.fitness = self.new_model_w
+				
+			self.gens_till_next_mut = self._num_gens_till_mut()
+			
+		else:
+			self.mutated = False
+			self.num_params_mutated = 0
+			self.fixed = False
+			self.gens_since_mut += 1
+		
+		self.current_gen += 1
