@@ -155,21 +155,27 @@ class PhysPopulation():
 		
 class WrightFisherSim:
 
-	def __init__(self,model,modelParams={},N=10e5,mu=10e-5,dt=10,selection_strength=.1):
+	def __init__(self,startModel,mutModel,N=10e5,mu=10e-5,dt=10,selection_strength=.1):
 	
-		self.model = model
-		self._model_params = modelParams
-		self._model_inst = self.model(**modelParams)
+		self.start_model = startModel
+		self.model = self.start_model.__class__
+		self._model_params = self.start_model.paramD
+
+		self.target = self.start_model.output
+		self.output = self.target
+		
+		# Mutation model
+		self.mutator = mutModel
+
 		# list for choosing num params to mutate range 1..#numModelParams
 		self._numParamList = [i+1 for i in np.arange(len(self._model_params))]
-		self.target = self._model_inst.output
-		self.output = self.target
 		
 		# PopGen parameters
 		self.mu = mu # mutation rate
 		self.dt = dt
 		self.N = N
-		self.current_params = modelParams
+		self.diploid = True
+		self.current_params = self._model_params
 		self.fitness = 1
 		self.selection_strength = selection_strength
 		self.current_gen = 1
@@ -179,8 +185,7 @@ class WrightFisherSim:
 		self.gens_till_next_mut = 1
 		self.gens_since_mut = 1
 		self.mutated = False
-		self.num_params_mutated = 0
-		self.params_mutated = []
+		self.param_mutated = None
 		self.new_model_w = 0
 		self.new_model_s = 0
 		self.prob_fix = 0
@@ -201,6 +206,12 @@ class WrightFisherSim:
 		return (w/self.fitness) - 1
 		
 	def _prob_fix(self,s):
+		'''Kimura diffusion approximation'''
+		if s == 0:
+			if self.diploid:
+				return 1.0/(2*self.N)
+			else:
+				return 1.0/self.N
 		return (1 - np.exp(-(2 * s))) / (1 - np.exp(-(4 * self.N * s)))
 		
 	def nextGen(self):
@@ -215,22 +226,10 @@ class WrightFisherSim:
 		
 			self.mutated = True
 			
-			# if mutation, get kind of mutation from uniform over how many parameters to disturb (1,2,3)
-			self.num_params_mutated = random.choice(self._numParamList)
-			
-			# Choose a number <self.num_params_mutated> of parameter names to mutate
-			self.params_mutated = random.sample(self.current_params.keys(),self.num_params_mutated)
-			newParamD = self.current_params.copy()
-			
-			# mutate parameters using normal (mean=0,dt)
-			for p in self.params_mutated:
-				# overwrite old params with new
-				newP = self.current_params[p] + random.normalvariate(0,2*self.dt)
-				if newP < 0:
-					newP = 0
-				newParamD[p] = newP
+			mutParams = self.mutator.mutate(self.current_params.copy())
 
-			newModel = self.model(**newParamD)
+			newModel = self.model(mutParams)
+			self.param_mutated = self.mutator.param_mutated
 			
 			# Calculate fitness
 			self.new_model_w = self._fitness_function_normal(self.target,newModel.output,self.selection_strength)
@@ -253,7 +252,6 @@ class WrightFisherSim:
 			
 		else:
 			self.mutated = False
-			self.num_params_mutated = 0
 			self.fixed = False
 			self.gens_since_mut += 1
 		
