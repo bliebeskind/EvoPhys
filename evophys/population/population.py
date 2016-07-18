@@ -63,7 +63,7 @@ class PhysPopulation():
 			ws.append(i.w)
 			
 		for p in paramVals:
-			self.param_means[p] = sum(paramVals[p])/len(paramVals[p])
+			self.param_means[p] = sum(paramVals[p])/float(len(paramVals[p]))
 			self.param_vars[p] = np.var(paramVals[p])
 			
 		self.mean_fitness = sum(ws)/len(ws)
@@ -98,7 +98,7 @@ class PhysPopulation():
 			self.population.append(newModel)
 			
 		for p in paramVals:
-			self.param_means[p] = sum(paramVals[p])/len(paramVals[p])
+			self.param_means[p] = sum(paramVals[p])/float(len(paramVals[p]))
 			self.param_vars[p] = np.var(paramVals[p])
 
 		self.mean_fitness = sum(ws)/len(ws)
@@ -136,7 +136,7 @@ class PhysPopulation():
 		self.population = newpop
 			
 		for p in paramVals:
-			self.param_means[p] = sum(paramVals[p])/len(paramVals[p])
+			self.param_means[p] = sum(paramVals[p])/float(len(paramVals[p]))
 			self.param_vars[p] = np.var(paramVals[p])
 			
 		self.mean_fitness = sum(ws)/len(ws)
