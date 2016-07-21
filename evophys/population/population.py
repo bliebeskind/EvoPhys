@@ -14,18 +14,23 @@ class PhysPopulation():
 	A population of user-specified biophysical models
 	'''
 
-	def __init__(self,startModel,mutModel,N=100,selection_strength=1,startRandom=False,paramBounds=None):
+	def __init__(self,targetModel,mutModel,N=100,selection_strength=1,startModel=None,startRandom=False,paramBounds=None):
 		
 		# Biophysical model
 		# Create target model on startup by simulating under binding model and populating self.binding curve
-		self.start_model = startModel
-		self.model = self.start_model.__class__
-		self._model_params = self.start_model.paramD
+		self.target_model = targetModel
+		if startModel == None:
+			self.start_model = targetModel
+		else:
+			assert startRandom == False, "Start model won't be used if startRandom is True"
+			self.start_model = startModel
+		self.model = self.target_model.__class__
+		self._model_params = self.target_model.paramD
 
-		self.target = self.start_model.output
+		self.target = self.target_model.output
 
-		self.param_means = {i:None for i in self.start_model.paramD}
-		self.param_vars = {i:None for i in self.start_model.paramD}
+		self.param_means = {i:None for i in self.target_model.paramD}
+		self.param_vars = {i:None for i in self.target_model.paramD}
 		
 		# Mutation model
 		self.mutator = mutModel
@@ -52,7 +57,7 @@ class PhysPopulation():
 		
 	def _update_biophys_params(self):
 		'''Update means and variances for population K1 and K2s'''
-		paramVals = {p:[] for p in self.start_model.paramD}
+		paramVals = {p:[] for p in self.target_model.paramD}
 		ws = []
 		for i in self.population:
 			for param,value in i.paramD.iteritems():
@@ -84,7 +89,7 @@ class PhysPopulation():
 				randParamD = {p: np.random.uniform(self.param_bounds[p][0],self.param_bounds[p][1]) for p in self.param_bounds}
 				newModel = self.model(paramD=randParamD)
 			else:
-				newModel = self.model(self._model_params)
+				newModel = self.model(self.start_model.paramD)
 			
 			newModel.w = self._get_w(self.target,newModel.output)
 			
@@ -115,7 +120,7 @@ class PhysPopulation():
 		
 	def procreate(self):
 		newpop = []
-		paramVals = {p:[] for p in self.start_model.paramD}
+		paramVals = {p:[] for p in self.target_model.paramD}
 		ws = []
 		
 		for model in self.population:
@@ -155,9 +160,13 @@ class PhysPopulation():
 		
 class WrightFisherSim:
 
-	def __init__(self,startModel,mutModel,N=10e5,mu=10e-5,dt=10,selection_strength=.1):
+	def __init__(self,targetModel,mutModel,N=10e5,mu=10e-5,dt=10,selection_strength=.1,startModel=None):
 	
-		self.start_model = startModel
+		self.target_model = targetModel
+		if startModel == None:
+			self.start_model = self.target_model
+		else:
+			self.start_model = startModel
 		self.model = self.start_model.__class__
 		self._model_params = self.start_model.paramD
 
