@@ -29,8 +29,8 @@ class PhysPopulation():
 
 		self.target = self.target_model.output
 
-		self.param_means = {i:None for i in self.target_model.paramD}
-		self.param_vars = {i:None for i in self.target_model.paramD}
+		self.param_means = {i:None for i in self.start_model.paramD}
+		self.param_vars = {i:None for i in self.start_model.paramD}
 		
 		# Mutation model
 		self.mutator = mutModel
@@ -57,7 +57,7 @@ class PhysPopulation():
 		
 	def _update_biophys_params(self):
 		'''Update means and variances for population K1 and K2s'''
-		paramVals = {p:[] for p in self.target_model.paramD}
+		paramVals = {p:[] for p in self.start_model.paramD}
 		ws = []
 		for i in self.population:
 			for param,value in i.paramD.iteritems():
@@ -69,7 +69,7 @@ class PhysPopulation():
 			
 		for p in paramVals:
 			self.param_means[p] = sum(paramVals[p])/float(len(paramVals[p]))
-			self.param_vars[p] = np.var(paramVals[p])
+			self.param_means[p] = np.var(paramVals[p])
 			
 		self.mean_fitness = sum(ws)/len(ws)
 		self.fitness_var = np.var(ws)
@@ -104,7 +104,7 @@ class PhysPopulation():
 			
 		for p in paramVals:
 			self.param_means[p] = sum(paramVals[p])/float(len(paramVals[p]))
-			self.param_vars[p] = np.var(paramVals[p])
+			self.param_means[p] = np.var(paramVals[p])
 
 		self.mean_fitness = sum(ws)/len(ws)
 		self.fitness_var = np.var(ws)
@@ -120,7 +120,7 @@ class PhysPopulation():
 		
 	def procreate(self):
 		newpop = []
-		paramVals = {p:[] for p in self.target_model.paramD}
+		paramVals = {p:[] for p in self.start_model.paramD}
 		ws = []
 		
 		for model in self.population:
@@ -142,7 +142,7 @@ class PhysPopulation():
 			
 		for p in paramVals:
 			self.param_means[p] = sum(paramVals[p])/float(len(paramVals[p]))
-			self.param_vars[p] = np.var(paramVals[p])
+			self.param_means[p] = np.var(paramVals[p])
 			
 		self.mean_fitness = sum(ws)/len(ws)
 		self.fitness_var = np.var(ws)
