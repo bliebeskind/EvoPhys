@@ -76,6 +76,7 @@ class SSBmut:
 				raise Exception("%s" % e)
 		
 		# set new fs
+		coop_fs = {} # parental cooperativities, see **Note** below
 		for i in range(2,self.out_paramD["nk"]+1):
 			for tup in combinations(range(1,self.out_paramD["nk"]+1),i): # set fs, build up ks
 				fstring = "f"+"".join(map(lambda x: str(x),tup))
@@ -83,9 +84,19 @@ class SSBmut:
 					continue
 				maybe_fParent = "f" + "".join(map(lambda x: str(x-self.paramD["nk"]),map(int,fstring[1:]))) # e.g. f12 if on f34
 				if maybe_fParent in self.paramD:
-					self.out_paramD[fstring] = self.paramD[maybe_fParent]
+					parent_coop = self.paramD[maybe_fParent]
+					self.out_paramD[fstring] = parent_coop
+					coop_fs[maybe_fParent[1:]] = parent_coop 				# See 
+				elif fstring[1:-1] in coop_fs: 							# **Note** 
+					self.out_paramD[fstring] = coop_fs[fstring[1:-1]] 	# below
+					coop_fs[fstring[1:]] = coop_fs[fstring[1:-1]] # propagate through state diagram
 				else:
 					self.out_paramD[fstring] = 1
+				
+				## **Note**: This is a subtle part of this model. If a two site model has cooperativity f12 = 10, the 
+				## "homologous" cooperativity factor in the duplicated 4-site model is f34 = 10. This is taken care of
+				## on line 85 above. However, one must also set the cooperativity factors f123, f124, and f1234 to 10,
+				## because of the conditional independence between the two duplicated parts. I.e. f123 is really just f12
 
 	def mutate(self,paramD):
 		self.paramD = paramD
