@@ -53,9 +53,9 @@ class SSBdynam:
 								+ "*".join(map(lambda x: "{k"+str(x)+"}",tup)) + "*x**{}".format(i)
 		numerator += ")"
 		denominator += "))"
-		tmp = "lambda x: " + numerator + " / " + denominator
-		self.function_string = tmp.replace("}",'').replace("{",'').split(":")[1].strip()
-		self.function = eval(tmp.format(**self.paramD))
+		self._func_to_format = "lambda x: " + numerator + " / " + denominator
+		self.function_string = self._func_to_format.replace("}",'').replace("{",'').split(":")[1].strip()
+		self.function = eval(self._func_to_format.format(**self.paramD))
 
 	def sim(self):
 		'''Populate self.output with output from self.function'''
