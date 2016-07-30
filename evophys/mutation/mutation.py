@@ -6,8 +6,8 @@ class SSBmut:
 
 	def __init__(self,mutations=None,nk_prob=.1,anyF_prob=.45):
 		if mutations == None:
-			self.mutations = {"k":lambda x:x + random.normalvariate(0,10),
-								"f":lambda x:x + random.normalvariate(0,.1), 
+			self.mutations = {"k":lambda x: abs(x + random.normalvariate(0,10)),
+								"f":lambda x: abs(x + random.normalvariate(0,.1)), 
 								"nk":lambda x:x*2 if x < 8 else x}
 		else:
 			self.mutations = mutations
