@@ -25,7 +25,7 @@ class SSBdynam:
 		
 		self.output = []
 		
-		self.step = .01
+		self.step = .1
 		self.step_func = lambda x: 10**x
 		
 		self.sim()
