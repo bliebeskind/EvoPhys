@@ -1,14 +1,14 @@
 '''
 Site-specific Binding model
-other documentation....
 '''
 
 import random
 import numpy as np
 from itertools import combinations
+from evophys.models.binding.binding_model import BindingModel
 
 
-class SSBdynam:
+class SSBdynam(BindingModel):
 
 	def __init__(self,paramD={"nk":2,"k1":1e7,"k2":1e8,"f12":10}):
 		
@@ -68,6 +68,12 @@ class SSBdynam:
 			else:
 				self.xvals.append(val)
 				self.output.append(self.function(val))
+
+	def get_paramD(self):
+		return self.paramD
+
+	def get_output(self):
+		return self.output
 		
 	
 	
