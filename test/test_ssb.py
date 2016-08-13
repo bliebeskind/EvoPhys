@@ -1,14 +1,15 @@
 import unittest
-from evophys.models.binding.ssb import SSB
+from evophys.models.binding.ssb import SSBdynam
 
 
 class SimplisticTest(unittest.TestCase):
 	
 	def test_binding_curve(self):
-		s = SSB()
+		s = SSBdynam()
+		s.sim()
 
 		# asserts that this class initalizes correctly
-		self.assertTrue( len(s.binding_curve) > 0 )
+		self.assertTrue( len(s.get_output()) > 0 )
 
 
 if __name__ == '__main__':
