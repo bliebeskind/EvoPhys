@@ -29,12 +29,8 @@ class ModelInference(object):
 		d = {}
 		for index, param_key in enumerate(self.input_model_param_names):
 			d[param_key] = theta[index]
-
-		# there's going to be a LOT of object creation if we do it
-		# this way, but good enough start
-		m = self.model_class(d)
-		m.sim()
-
+		
+		self.input_model.get_binding_curve()	
 		inv_sigma2 = 1.0/(5) # TODO add sigma to the param list
 		return -0.5*(np.sum((y-m.output)**2*inv_sigma2 - np.log(inv_sigma2)))
 
