@@ -31,7 +31,7 @@ class ModelInference(object):
 			d[param_key] = theta[index]
 		
 		self.input_model.get_binding_curve()	
-		inv_sigma2 = 1.0/(5) # TODO add sigma to the param list
+		inv_sigma2 = 1.0/(3) # TODO add sigma to the param list
 		return -0.5*(np.sum((y-m.output)**2*inv_sigma2 - np.log(inv_sigma2)))
 
 		
