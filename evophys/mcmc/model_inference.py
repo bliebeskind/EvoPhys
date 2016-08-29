@@ -25,14 +25,15 @@ class ModelInference(object):
 		return 0.0 # flat priors for now
 
 	def __ln_likelihood(self, theta, x, y):
-		assert(len(theta) == len(self.input_model_param_names))
+		assert(len(theta) == len(self.input_model_param_names)) + 1
 		d = {}
 		for index, param_key in enumerate(self.input_model_param_names):
 			d[param_key] = theta[index]
-		
-		y = self.input_model.get_binding_curve(theta)	
-		inv_sigma2 = 1.0/(3) # TODO add sigma to the param list
-		return -0.5*(np.sum((y-self.y_data)**2*inv_sigma2 - np.log(inv_sigma2)))
+		sigma = theta[-1]
+
+		pred = self.input_model.get_binding_curve(theta[:-1])	
+		inv_sigma2 = 1.0/(sigma**2) # TODO add sigma to the param list
+		return -0.5*(np.sum((y-pred)**2*inv_sigma2 - np.log(inv_sigma2)))
 
 		
 	def __ln_posterior(self, theta, x, y):
@@ -43,14 +44,15 @@ class ModelInference(object):
 
 	def sample(self, iterations=1000, nwalkers=10, burnin=100):
 		# Set up the sampler.
-		ndim = len(self.input_model_param_names)
+		ndim = len(self.input_model_param_names) + 1 # add one for sigma parameter
 		pos = [ 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
 		self.sampler = emcee.EnsembleSampler(nwalkers, ndim, self.__ln_posterior, args=(self.x_data, self.y_data))
 		res = self.sampler.run_mcmc(pos, iterations, rstate0=np.random.get_state())
 
 		samples = self.sampler.chain[:, burnin:, :].reshape((-1, ndim))
 
-		self.posterior_samples = {}
+		self.posterior_samples = {} # TODO pandas DataFrame
 		for index, param_key in enumerate(self.input_model_param_names):
 			self.posterior_samples[param_key] = samples[:,index]
+		self.posterior_samples["sigma"] = samples[:,-1]
 
