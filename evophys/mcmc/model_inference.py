@@ -15,7 +15,7 @@ class ModelInference(object):
 
 	def load_data(self, input = None):
 		self.x_data = self.input_model.xvals
-		if not input:
+		if input == None:
 			self.y_data = self.input_model.output
 		else:
 			self.y_data = input

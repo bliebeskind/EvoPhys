@@ -15,21 +15,15 @@ class TwoSiteNoCoop(BindingModel):
         self.k2 = paramD['k2']
         self.f = 1
         self.w = None
-        self.conc_range = (-12,-3)
-        self.binding_curve = []
-        self.xvals = []
+        self.conc_range = (-12,-1)
         self.step = .01
-        self.function = lambda x: (self.k1*x + self.k2*x + self.f*2*self.k1*self.k2*(x**2)) / (2 * (1 + self.k1*x + self.k2*x + self.f*self.k1*self.k2*(x**2)))
-        
+        self.function = lambda x: (self.k1*x + self.k2*x + 2*self.f*self.k1*self.k2*(x**2)) / float((2 * (1 + self.k1*x + self.k2*x + self.f*self.k1*self.k2*(x**2))))
         self.sim()
 
     def sim(self):
-        self.binding_curve = []
-        self.xvals = []
-        for val in np.arange(self.conc_range[0],self.conc_range[1],self.step):
-            self.xvals.append(10**val)
-            self.binding_curve.append(self.function(val))
-
+        self.xvals = [10**val for val in range(self.conc_range[0],self.conc_range[1])]
+        self.binding_curve = self.get_binding_curve(self.paramD.values())
+            
     def get_paramD(self):
         return self.paramD
 
