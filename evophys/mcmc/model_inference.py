@@ -30,9 +30,9 @@ class ModelInference(object):
 		for index, param_key in enumerate(self.input_model_param_names):
 			d[param_key] = theta[index]
 		
-		self.input_model.get_binding_curve()	
+		y = self.input_model.get_binding_curve(theta)	
 		inv_sigma2 = 1.0/(3) # TODO add sigma to the param list
-		return -0.5*(np.sum((y-m.output)**2*inv_sigma2 - np.log(inv_sigma2)))
+		return -0.5*(np.sum((y-self.y_data)**2*inv_sigma2 - np.log(inv_sigma2)))
 
 		
 	def __ln_posterior(self, theta, x, y):
@@ -52,5 +52,5 @@ class ModelInference(object):
 
 		self.posterior_samples = {}
 		for index, param_key in enumerate(self.input_model_param_names):
-			self.posterior_samples[param_key] = samples[:,i]
+			self.posterior_samples[param_key] = samples[:,index]
 
