@@ -1,6 +1,8 @@
 import emcee
 import numpy as np
 from evophys.models.binding.binding_model import BindingModel
+import matplotlib.pyplot as plt
+import pandas as pd
 
 class ModelInference(object):
 	def __init__(self, input_model):
@@ -12,6 +14,8 @@ class ModelInference(object):
 		self.y_data = None
 		self.x_data = None
 		self.posterior_samples = None
+
+		self.sampling_finished = False
 
 	def load_data(self, input = None):
 		self.x_data = self.input_model.xvals
@@ -32,7 +36,7 @@ class ModelInference(object):
 		sigma = theta[-1]
 
 		pred = self.input_model.get_binding_curve(theta[:-1])	
-		inv_sigma2 = 1.0/(sigma**2) # TODO add sigma to the param list
+		inv_sigma2 = 1.0/(sigma**2) 
 		return -0.5*(np.sum((y-pred)**2*inv_sigma2 - np.log(inv_sigma2)))
 
 		
@@ -53,6 +57,28 @@ class ModelInference(object):
 
 		self.posterior_samples = {} # TODO pandas DataFrame
 		for index, param_key in enumerate(self.input_model_param_names):
-			self.posterior_samples[param_key] = samples[:,index]
-		self.posterior_samples["sigma"] = samples[:,-1]
+			self.posterior_samples[param_key] = samples[burnin:,index]
+		self.posterior_samples["sigma"] = samples[burnin:,-1]
+
+		self.posterior_samples = pd.DataFrame(self.posterior_samples)
+		self.sampling_finished = True
+
+	def convergence_plot(self, logarithmic = True):
+		# this is probably a little silly, to have these very particular plotting methods...
+		
+		if not self.sampling_finished:
+			raise Exception("Must run .sample() before any output results can be viewed.")
+
+		num_plots = len(self.input_model_param_names) + 1
+
+		plt.clf()
+		fig, axes = plt.subplots(num_plots, 1, sharex=True, figsize=(8, 9))
+		for i in range(num_plots):			
+			axes[i].plot(self.sampler.chain[:, :, i].T, color="k", alpha=0.4)
+			if logarithmic: axes[i].set_yscale("log")
+			try:
+				axes[i].set_ylabel(self.input_model_param_names[i])
+			except IndexError:
+				axes[i].set_ylabel("sigma")
+
 
