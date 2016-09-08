@@ -41,6 +41,10 @@ class ModelInference(object):
 		sigma = theta[-1]
 
 		pred = self.input_model.get_binding_curve(theta[:-1])	
+		# TODO - you're enforcing the wrong contract here ^^
+		# the trait BindingModel doesnt even have a get_binding_curve() method
+		# but that will need to be added
+
 		inv_sigma2 = 1.0/(sigma**2) 
 
 		# Here, we're assuming Gaussian noise around binding curve
