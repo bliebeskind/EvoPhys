@@ -4,8 +4,12 @@ from evophys.models.binding.binding_model import BindingModel
 import matplotlib.pyplot as plt
 import pandas as pd
 
+"""
+Parameter inference for binding models using Markov chain Monte Carlo methods.
+"""
 class ModelInference(object):
 	def __init__(self, input_model):
+		# input model must inherit BindingModel
 		assert(isinstance(input_model, BindingModel))
 		self.input_model = input_model
 		self.input_model_param_names = self.input_model.paramD.keys()
@@ -18,6 +22,7 @@ class ModelInference(object):
 		self.sampling_finished = False
 
 	def load_data(self, input = None):
+		''' Load in the binding data to be used for model fitting. '''
 		self.x_data = self.input_model.xvals
 		if input == None:
 			self.y_data = self.input_model.output
@@ -37,6 +42,8 @@ class ModelInference(object):
 
 		pred = self.input_model.get_binding_curve(theta[:-1])	
 		inv_sigma2 = 1.0/(sigma**2) 
+
+		# Here, we're assuming Gaussian noise around binding curve
 		return -0.5*(np.sum((y-pred)**2*inv_sigma2 - np.log(inv_sigma2)))
 
 		
@@ -47,6 +54,8 @@ class ModelInference(object):
 		return lp + self.__ln_likelihood(theta, x, y)
 
 	def sample(self, iterations=1000, nwalkers=10, burnin=100):
+		''' Posterior sampling with adaptive MCMC. '''
+
 		# Set up the sampler.
 		ndim = len(self.input_model_param_names) + 1 # add one for sigma parameter
 		pos = [ 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
@@ -55,7 +64,8 @@ class ModelInference(object):
 
 		samples = self.sampler.chain[:, burnin:, :].reshape((-1, ndim))
 
-		self.posterior_samples = {} # TODO pandas DataFrame
+		# extract posterior samples from numpy array and construct a DataFrame
+		self.posterior_samples = {} 
 		for index, param_key in enumerate(self.input_model_param_names):
 			self.posterior_samples[param_key] = samples[burnin:,index]
 		self.posterior_samples["sigma"] = samples[burnin:,-1]
