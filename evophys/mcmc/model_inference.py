@@ -42,9 +42,6 @@ class ModelInference(object):
 		sigma = theta[-1]
 
 		pred = self.input_model.get_binding_curve(theta[:-1])	
-		# TODO - you're enforcing the wrong contract here ^^
-		# the trait BindingModel doesnt even have a get_binding_curve() method
-		# but that will need to be added
 
 		inv_sigma2 = 1.0/(sigma**2) 
 
@@ -96,12 +93,19 @@ class ModelInference(object):
 			except IndexError:
 				axes[i].set_ylabel("sigma")
 
-	def correlation_plot(self):
+	def correlation_plot(self, logarithmic=True):
 		# plot pairwise parameter correlations with a scatterplot matrix
 
 		if not self.sampling_finished:
 			raise Exception("Must run .sample() before any output results can be viewed.")
 
-		sns.pairplot(self.posterior_samples)
+		if not logarithmic: 
+			sns.pairplot(self.posterior_samples)
+		else:
+			df = np.log10(self.posterior_samples.iloc[:,:-1]).dropna()
+			g = sns.PairGrid(df, diag_sharey=False)
+			g.map_lower(sns.kdeplot, cmap="Blues_d")
+			g.map_upper(plt.scatter,alpha=.1)
+			g.map_diag(sns.kdeplot, lw=3)
 
 
