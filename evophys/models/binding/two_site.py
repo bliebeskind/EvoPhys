@@ -27,9 +27,6 @@ class TwoSiteNoCoop(BindingModel):
     def get_paramD(self):
         return self.paramD
 
-    def get_output(self):
-        return self.output
-
     def get_binding_curve(self, params):
         """
         For some input parameter values, compute and return the predicted binding curve.
