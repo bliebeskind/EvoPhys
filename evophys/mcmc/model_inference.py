@@ -3,6 +3,7 @@ import numpy as np
 from evophys.models.binding.binding_model import BindingModel
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 """
 Parameter inference for binding models using Markov chain Monte Carlo methods.
@@ -94,5 +95,13 @@ class ModelInference(object):
 				axes[i].set_ylabel(self.input_model_param_names[i])
 			except IndexError:
 				axes[i].set_ylabel("sigma")
+
+	def correlation_plot(self):
+		# plot pairwise parameter correlations with a scatterplot matrix
+
+		if not self.sampling_finished:
+			raise Exception("Must run .sample() before any output results can be viewed.")
+
+		sns.pairplot(self.posterior_samples)
 
 
