@@ -31,9 +31,9 @@ class BindingModel(object):
 		pass
 
 	@abstractmethod
-	def get_output(self):
+	def get_binding_curve(self, params):
 		"""
 		A binding model must have a public method to return
-		the simulated binding curve.
+		a simulated binding curve for arbitrary input parameters.
 		"""
 		pass
