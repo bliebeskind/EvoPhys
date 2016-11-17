@@ -2,6 +2,34 @@ import random
 import numpy as np
 from itertools import combinations
 
+class SSBtwosite:
+
+	'''A simpler mutation class for a two site model that keeps "nk" the same. Advantage
+	is it allows each "k" to have a different mutation rate, in case you want to clamp one.'''
+
+	def __init__(self,mutations=None,mut_probs={"k1":1.0/3,"k2":1.0/3,"f12":1.0/3,"nk":0}):
+		if mutations == None:
+			self.mutations = {"k1":lambda x: abs(x + random.normalvariate(0,10)),
+								"k2":lambda x: abs(x + random.normalvariate(0,10)),
+								"f12":lambda x: abs(x + random.normalvariate(0,.1)),
+								"nk":lambda x: x} # keep number of sites constant
+		else:
+			self.mutations = mutations
+		self.param_vec = self.mutations.keys()
+		try:
+			self.probs_vec = [mut_probs[param] for param in self.param_vec]
+		except KeyError,e:
+			raise Exception("Parameter %s not found in supplied probability dict" % e)
+			
+								
+	def mutate(self,paramD):
+		self.paramD = paramD
+		self.param_mutated = np.random.choice(self.param_vec,p=self.probs_vec)
+		self.out_paramD = self.paramD.copy()
+		mut_func = self.mutations[self.param_mutated]
+		self.out_paramD[self.param_mutated] = mut_func(self.paramD[self.param_mutated])
+		return self.out_paramD
+
 class SSBmut:
 
 	def __init__(self,mutations=None,nk_prob=.1,anyF_prob=.45):
@@ -105,7 +133,7 @@ class SSBmut:
 			self._update_probs()
 			self._update_defs()
 		self.param_mutated = np.random.choice(self.param_vec,p=self.probs_vec)
-		self.param_mutated
+		self.param_mutated # ??
 		self.out_paramD = {}
 		if self.param_mutated == "nk":
 			mut_func = self.mut_defs["nk"]
