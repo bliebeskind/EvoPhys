@@ -160,7 +160,7 @@ class PhysPopulation():
 		
 class WrightFisherSim:
 
-	def __init__(self,targetModel,mutModel,N=10e5,mu=10e-5,dt=10,selection_strength=.1,startModel=None):
+	def __init__(self,targetModel,mutModel,N=10e5,mu=10e-5,selection_strength=.1,startModel=None):
 	
 		self.target_model = targetModel
 		if startModel == None:
@@ -181,7 +181,6 @@ class WrightFisherSim:
 		
 		# PopGen parameters
 		self.mu = mu # mutation rate
-		self.dt = dt
 		self.N = N
 		self.diploid = True
 		self.current_params = self._model_params
